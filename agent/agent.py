@@ -40,7 +40,6 @@ class Agent:
             tools=tool_schemas if tool_schemas else None, 
             stream=True
         ):
-            print(event)
             if event.type == StreamEventType.TEXT_DELTA:
                 if event.text_delta:
                     content = event.text_delta.content
@@ -55,7 +54,16 @@ class Agent:
                     event.error or "Unknow error occurred.",
                 )
         self.context_manager.add_assistant_message(
-            response_text or None
+            response_text or None , 
+            [
+                {
+                    'id': tc.call_id , 
+                    'type': 'function' , 
+                    'function': {'name': tc.name , 'arguments': str(tc.arguments)}
+                }
+                for tc in tool_calls
+            ]
+            if tool_calls else None
         )
         
         if response_text:
