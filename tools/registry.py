@@ -48,7 +48,7 @@ class ToolRegistry:
         name: str , 
         params: dict[str , Any] , 
         cwd: Path | None,
-    ):
+    ) -> ToolResult:
         tool = self.get(name)
         if tool is None:
             return ToolResult.error_result(
@@ -71,15 +71,16 @@ class ToolRegistry:
             cwd=cwd , 
         )
         try:
-            await tool.execute(invocation)
+            result = await tool.execute(invocation)
         except Exception as e:
             logger.exception(f"Tool {name} raised unexpected error")
-            return ToolResult.error_result(
+            result = ToolResult.error_result(
                 f"Internal error: {str(e)}" , 
                 metadata={
                     "tool_name": name
                 }
             )
+        return result
         
 
 def create_default_registry() -> ToolRegistry:
