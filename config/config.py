@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class ModelConfig(BaseModel):
-    name: str = "mistralai/devstral-2512:free"
+    name: str = "meta-llama/llama-4-scout-17b-16e-instruct"
     temperature: float = Field(default=1 , ge=0.0 , le=2.0)
     context_window: int | None = None
 

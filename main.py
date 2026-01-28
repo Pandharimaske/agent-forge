@@ -54,8 +54,8 @@ class CLI:
         tool = self.agent.session.tool_registry.get(tool_name)
         if not tool:
             tool_kind = None
-
-        tool_kind = tool.kind.value
+        else:
+            tool_kind = tool.kind.value
 
         return tool_kind
 
@@ -104,6 +104,7 @@ class CLI:
                     event.data.get("output", ""),
                     event.data.get("error"),
                     event.data.get("metadata"),
+                    event.data.get("diff") , 
                     event.data.get("truncated", False),
                 )
         return final_response

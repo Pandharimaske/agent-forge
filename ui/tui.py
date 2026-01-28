@@ -63,7 +63,7 @@ class TUI:
         self._tool_args_by_call_id: dict[str , dict[str , Any]] = {}
         self.config = config
         self.cwd = self.config.cwd
-        self._max_block_tokens = 2500
+        self._max_block_tokens = 240
 
     def begin_assistant(self) -> None:
         self.console.print()
@@ -249,6 +249,7 @@ class TUI:
         output: str,
         error: str | None,
         metadata: dict[str, Any] | None,
+        diff: str | None, 
         truncated: bool,
     ) -> None:
         border_style = f"tool.{tool_kind}" if tool_kind else "tool"
@@ -312,6 +313,24 @@ class TUI:
                         word_wrap=False,
                     )
                 )
+        elif name in {"write_file", "edit"} and success and diff:
+            output_line = output.strip() if output.strip() else "Completed"
+            blocks.append(Text(output_line, style="muted"))
+            diff_text = diff
+            diff_display = truncate_text(
+                diff_text,
+                self.config.model_name,
+                self._max_block_tokens,
+            )
+            blocks.append(
+                Syntax(
+                    diff_display,
+                    "diff",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
+
         else:
             if error and not success:
                 blocks.append(Text(error, style="error"))

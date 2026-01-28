@@ -56,7 +56,7 @@ class Agent:
                         event.error or "Unknow error occurred.",
                     )
             self.session.context_manager.add_assistant_message(
-                response_text or None , 
+                response_text,
                 [
                     {
                         'id': tc.call_id , 

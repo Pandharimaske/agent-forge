@@ -61,7 +61,7 @@ class StreamEvent:
 @dataclass
 class ToolResultMessage:
     tool_call_id: str
-    content: str 
+    content: str = ""
     is_error: bool = False
 
     def to_openai_message(self) -> dict[str , Any]:
