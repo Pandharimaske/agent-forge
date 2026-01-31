@@ -7,6 +7,8 @@ from enum import Enum
 from typing import Any
 from dataclasses import dataclass , field
 
+from config.config import Config
+
 class ToolKind(str , Enum):
     READ = "read"
     WRITE = "write"
@@ -56,6 +58,7 @@ class ToolResult:
 
     truncated: bool = False
     diff: FileDiff | None = None
+    exit_code: int | None = None
 
 
     @classmethod
@@ -109,8 +112,8 @@ class Tool(abc.ABC):
     description: str = "Base tool"
     kind: ToolKind.READ
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self , config: Config) -> None:
+        self.config = config
 
     @property
     def schema(self) -> dict[str , Any] | type['BaseModel']:

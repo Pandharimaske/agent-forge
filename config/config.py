@@ -4,13 +4,24 @@ from pydantic import BaseModel, Field
 
 
 class ModelConfig(BaseModel):
-    name: str = "meta-llama/llama-4-scout-17b-16e-instruct"
-    temperature: float = Field(default=1 , ge=0.0 , le=2.0)
-    context_window: int | None = None
+    name: str = "arcee-ai/trinity-large-preview:free"
+    temperature: float = Field(default=1, ge=0.0, le=2.0)
+    context_window: int = 256_000
+
+
+class ShellEnvironmentPolicy(BaseModel):
+    ignore_default_excludes: bool = False
+    exclude_patterns: list[str] = Field(
+        default_factory=lambda: ["*KEY*", "*TOKEN*", "*SECRET*"]
+    )
+    set_vars: dict[str, str] = Field(default_factory=dict)
 
 class Config(BaseModel):
     model: ModelConfig = Field(default_factory=ModelConfig)
     cwd: Path = Field(default=Path.cwd())
+    shell_environment: ShellEnvironmentPolicy = Field(
+        default_factory=ShellEnvironmentPolicy , 
+    )
 
     max_turns: int = 100
 

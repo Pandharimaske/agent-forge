@@ -1,4 +1,5 @@
 from __future__ import annotations
+import json
 from typing import AsyncGenerator
 
 from agent.session import Session
@@ -61,7 +62,10 @@ class Agent:
                     {
                         'id': tc.call_id , 
                         'type': 'function' , 
-                        'function': {'name': tc.name , 'arguments': str(tc.arguments)}
+                        'function': {
+                            'name': tc.name , 
+                            'arguments': json.dumps(tc.arguments)  # ✅ Proper JSON string
+                        }
                     }
                     for tc in tool_calls
                 ]

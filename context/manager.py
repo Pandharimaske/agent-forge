@@ -21,11 +21,14 @@ class MessageItem:
 
         if self.tool_calls:
             result['tool_calls'] = self.tool_calls
-
+        
+        # Include content - use None for tool_calls with no text
         if self.content:
             result["content"] = self.content
-
-        result["content"] = self.content if self.content is not None else ""
+        elif self.tool_calls:
+            result["content"] = None  # null in JSON
+        else:
+            result["content"] = ""
 
         return result
 
@@ -88,5 +91,5 @@ class ContextManager:
         
         for item in self._messages:
             messages.append(item.to_dict())
-
+            
         return messages
