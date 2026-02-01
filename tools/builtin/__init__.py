@@ -8,6 +8,8 @@ from tools.builtin.grep import GrepTool
 from tools.builtin.glob import GlobTool
 from tools.builtin.web_search import WebSearchTool
 from tools.builtin.web_fetch import WebFetchTool
+from tools.builtin.todos import TodosTool
+from tools.builtin.memory import MemoryTool
 
 
 __all__ = [
@@ -20,6 +22,8 @@ __all__ = [
     'GlobTool' , 
     'WebSearchTool' ,
     'WebFetchTool' ,
+    'TodosTool' ,
+    'MemoryTool' ,
 ]
 
 def get_all_builtin_tools() -> list[Tool]:
@@ -33,4 +37,6 @@ def get_all_builtin_tools() -> list[Tool]:
         GlobTool,
         WebSearchTool,
         WebFetchTool,
+        TodosTool,
+        MemoryTool,
     ]

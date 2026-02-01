@@ -1,8 +1,10 @@
 
 from typing import Any
+from client.response import TokenUsage
 from config.config import Config
 from prompts.system import get_system_prompt
 from dataclasses import dataclass, field
+from tools.base import Tool
 from utils.text import count_tokens
 
 @dataclass
@@ -33,11 +35,18 @@ class MessageItem:
         return result
 
 class ContextManager:
-    def __init__(self , config: Config) -> None:
+    def __init__(
+        self,
+        config: Config,
+        user_memory: str | None,
+        tools: list[Tool] | None,
+    ) -> None:
+        self._system_prompt = get_system_prompt(config, user_memory, tools)
         self.config = config
-        self._system_prompt = get_system_prompt(config)
         self._model_name = self.config.model_name
         self._messages: list[MessageItem] = []
+        self._latest_usage = TokenUsage()
+        self.total_usage = TokenUsage()
 
     def add_user_message(self , content: str) -> None:
         item = MessageItem(
