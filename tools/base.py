@@ -110,7 +110,7 @@ class ToolConfirmation:
 class Tool(abc.ABC):
     name: str = "base_tool"
     description: str = "Base tool"
-    kind: ToolKind.READ
+    kind: ToolKind = ToolKind.READ
 
     def __init__(self , config: Config) -> None:
         self.config = config
