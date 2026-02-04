@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 
 from agent.session import Session
 from agent.events import AgentEvent, AgentEventType
-from client.response import StreamEventType, ToolCall, ToolResultMessage
+from client.response import StreamEventType, TokenUsage, ToolCall, ToolResultMessage
 from config.config import Config
 
 
@@ -34,7 +34,21 @@ class Agent:
             
             response_text = ""
 
+            #check for context overflow
+            if self.session.context_manager.needs_compression():
+                summary , usage = await self.session.chat_compactor.compress(
+                    self.session.context_manager
+                )
+
+                if summary:
+                    self.session.context_manager.replace_with_summary(summary)
+                    self.session.context_manager.set_latest_usage(usage)
+                    self.session.context_manager.add_usage(usage)
+
+
+
             tool_schemas = self.session.tool_registry.get_schemas()
+            usage: TokenUsage | None = None
 
             tool_calls: list[ToolCall] = []
 
@@ -56,6 +70,10 @@ class Agent:
                     yield AgentEvent.agent_error(
                         event.error or "Unknow error occurred.",
                     )
+                elif event.type == StreamEventType.MESSAGE_COMPLETE:
+                    usage = event.usage
+
+
             self.session.context_manager.add_assistant_message(
                 response_text,
                 [
@@ -74,10 +92,15 @@ class Agent:
             
             if response_text:
                 yield AgentEvent.text_complete(response_text)
-            
-            if not tool_calls:
-                return
 
+            if not tool_calls:
+                if usage:
+                    self.session.context_manager.set_latest_usage(usage)
+                    self.session.context_manager.add_usage(usage)
+
+                self.session.context_manager.prune_tool_outputs()
+                return
+            
             tool_call_results: list[ToolResultMessage] = []
             for tool_call in tool_calls:
                 yield AgentEvent.tool_call_start(
@@ -111,6 +134,11 @@ class Agent:
                     tool_result.tool_call_id , 
                     tool_result.content , 
                 )
+            
+            if usage:
+                self.session.context_manager.set_latest_usage(usage)
+                self.session.context_manager.add_usage(usage)
+            self.session.context_manager.prune_tool_outputs()
 
         yield AgentEvent.agent_error(
             f"Maximum turns exceeded: {max_turns}" ,
