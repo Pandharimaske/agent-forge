@@ -1,0 +1,8 @@
+hooks_enabled = true
+
+[model]
+temperature = 0
+
+[mcp_servers.filesystem]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "/Users/pandhari/Desktop/AI_AGENT_From_Scratch", "/tmp"]
