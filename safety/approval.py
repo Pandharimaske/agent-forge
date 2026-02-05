@@ -21,7 +21,7 @@ class ApprovalContext:
     is_mutating: bool
     affected_paths: list[Path]
     command: str | None = None
-    is_dangerous: bool = False
+    is_dangerous: bool = True
 
 
 DANGEROUS_PATTERNS = [
