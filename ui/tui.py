@@ -1,19 +1,22 @@
 from pathlib import Path
-import re
 from typing import Any
-from rich.console import Console , Group
+from rich.console import Console
 from rich.theme import Theme
 from rich.rule import Rule
+from rich.text import Text
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
 from rich import box
+from rich.prompt import Prompt
+from rich.console import Group
 from rich.syntax import Syntax
-
+from rich.markdown import Markdown
 from config.config import Config
+from tools.base import ToolConfirmation
 from utils.paths import display_path_rel_to_cwd
-from utils.text import truncate_text
+import re
 
+from utils.text import truncate_text
 
 AGENT_THEME = Theme(
     {
@@ -44,30 +47,31 @@ AGENT_THEME = Theme(
 
 _console: Console | None = None
 
+
 def get_console() -> Console:
     global _console
     if _console is None:
-        _console = Console(theme=AGENT_THEME , highlight=False)
-    
+        _console = Console(theme=AGENT_THEME, highlight=False)
+
     return _console
 
 
 class TUI:
     def __init__(
-            self , 
-            config: Config,
-            console: Console | None = None , 
+        self,
+        config: Config,
+        console: Console | None = None,
     ) -> None:
         self.console = console or get_console()
         self._assistant_stream_open = False
-        self._tool_args_by_call_id: dict[str , dict[str , Any]] = {}
+        self._tool_args_by_call_id: dict[str, dict[str, Any]] = {}
         self.config = config
         self.cwd = self.config.cwd
-        self._max_block_tokens = 240
+        self._max_block_tokens = 2500
 
     def begin_assistant(self) -> None:
         self.console.print()
-        self.console.print(Rule(Text("Assistant") , style="assistant"))
+        self.console.print(Rule(Text("Assistant", style="assistant")))
         self._assistant_stream_open = True
 
     def end_assistant(self) -> None:
@@ -75,8 +79,8 @@ class TUI:
             self.console.print()
         self._assistant_stream_open = False
 
-    def stream_assistant_delta(self , content: str) -> None:
-        self.console.print(content , end="" , markup=False)
+    def stream_assistant_delta(self, content: str) -> None:
+        self.console.print(content, end="", markup=False)
 
     def _ordered_args(self, tool_name: str, args: dict[str, Any]) -> list[tuple]:
         _PREFERRED_ORDER = {
@@ -123,7 +127,6 @@ class TUI:
             table.add_row(key, value)
 
         return table
-
 
     def tool_call_start(
         self,
@@ -249,7 +252,7 @@ class TUI:
         output: str,
         error: str | None,
         metadata: dict[str, Any] | None,
-        diff: str | None, 
+        diff: str | None,
         truncated: bool,
         exit_code: int | None,
     ) -> None:
@@ -378,7 +381,6 @@ class TUI:
                     word_wrap=True,
                 )
             )
-        
         elif name == "grep" and success:
             matches = metadata.get("matches")
             files_searched = metadata.get("files_searched")
@@ -402,7 +404,6 @@ class TUI:
                     word_wrap=True,
                 )
             )
-            
         elif name == "glob" and success:
             matches = metadata.get("matches")
             if isinstance(matches, int):
@@ -515,7 +516,6 @@ class TUI:
                     word_wrap=True,
                 )
             )
-        
         else:
             if error and not success:
                 blocks.append(Text(error, style="error"))
@@ -552,3 +552,69 @@ class TUI:
         )
         self.console.print()
         self.console.print(panel)
+
+    def handle_confirmation(self, confirmation: ToolConfirmation) -> bool:
+        output = [
+            Text(confirmation.tool_name, style="tool"),
+            Text(confirmation.description, style="code"),
+        ]
+
+        if confirmation.command:
+            output.append(Text(f"$ {confirmation.command}", style="warning"))
+
+        if confirmation.diff:
+            diff_text = confirmation.diff.to_diff()
+            output.append(
+                Syntax(
+                    diff_text,
+                    "diff",
+                    theme="monokai",
+                    word_wrap=True,
+                )
+            )
+
+        self.console.print()
+        self.console.print(
+            Panel(
+                Group(*output),
+                title=Text("Approval required", style="warning"),
+                title_align="left",
+                border_style="warning",
+                box=box.ROUNDED,
+                padding=(1, 2),
+            )
+        )
+
+        response = Prompt.ask(
+            "\nApprove?", choices=["y", "n", "yes", "no"], default="n"
+        )
+
+        return response.lower() in {"y", "yes"}
+
+    def show_help(self) -> None:
+        help_text = """
+## Commands
+
+- `/help` - Show this help
+- `/exit` or `/quit` - Exit the agent
+- `/clear` - Clear conversation history
+- `/config` - Show current configuration
+- `/model <name>` - Change the model
+- `/approval <mode>` - Change approval mode
+- `/stats` - Show session statistics
+- `/tools` - List available tools
+- `/mcp` - Show MCP server status
+- `/save` - Save current session
+- `/checkpoint [name]` - Create a checkpoint
+- `/checkpoints` - List available checkpoints
+- `/restore <checkpoint_id>` - Restore a checkpoint
+- `/sessions` - List saved sessions
+- `/resume <session_id>` - Resume a saved session
+
+## Tips
+
+- Just type your message to chat with the agent
+- The agent can read, write, and execute code
+- Some operations require approval (can be configured)
+"""
+        self.console.print(Markdown(help_text))
