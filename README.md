@@ -256,12 +256,6 @@ User Message
 
 ---
 
-## 📄 License
-
-MIT License. See [LICENSE](LICENSE) for details.
-
----
-
 ## 🙋‍♂️ Author
 
 **Pandhari Maske**  
